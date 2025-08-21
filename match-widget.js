@@ -4,13 +4,12 @@ function createWidget(container) {
     const FIXTURE_ID = container.getAttribute("data-fixture");
     const LEAGUE = container.getAttribute("data-league") || "eng.1";
     const API_URL = `https://espn-one.vercel.app/api/espn?league=${LEAGUE}&id=${FIXTURE_ID}`;
+    const CACHE_KEY = `fixture_${LEAGUE}_${FIXTURE_ID}`;
+    const CACHE_EXPIRY = 30 * 24 * 60 * 60 * 1000; // 30 days
 
     // Inject skeleton with ALL sections (ads included)
     container.innerHTML = `
         <div class="fw-loading">Loading match data...</div>
-        <div class="fw-error" style="display: none;">
-            <div class="fw-error-message"></div>
-        </div>
         <div class="fw-content" style="display: none;">
             
             <!-- AdSense 1 -->
@@ -190,6 +189,7 @@ function createWidget(container) {
 
     function renderTeamStatistics(teams) {
         const containerEl = container.querySelector('.fw-team-statistics');
+        containerEl.innerHTML = '';
         teams.forEach(team => {
             const teamDiv = document.createElement('div');
             teamDiv.innerHTML = `
@@ -226,35 +226,58 @@ function createWidget(container) {
         `;
     }
 
-    // === Main fetch ===
+    // === Render Wrapper ===
+    function renderData(data) {
+        container.querySelector('.fw-loading').style.display = 'none';
+        container.querySelector('.fw-content').style.display = 'block';
+
+        if (data.boxscore?.form) renderRecentForm(data.boxscore.form);
+        if (data.boxscore?.teams) {
+            renderHeadToHead(data.headToHeadGames || [], data.boxscore.teams);
+            renderTeamStatistics(data.boxscore.teams);
+            const homeTeam = data.boxscore.teams.find(t => t.homeAway === 'home');
+            if (data.gameInfo?.venue) renderVenueInfo(data.gameInfo.venue, homeTeam);
+        }
+
+        try {
+            (adsbygoogle = window.adsbygoogle || []).push({});
+            (adsbygoogle = window.adsbygoogle || []).push({});
+            (adsbygoogle = window.adsbygoogle || []).push({});
+        } catch(e) { console.log("AdSense not loaded"); }
+    }
+
+    // === Main fetch with cache ===
     async function loadFixtureData() {
+        let data = null;
+
         try {
             const res = await fetch(API_URL);
-            if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
-            const data = await res.json();
-            container.querySelector('.fw-loading').style.display = 'none';
-            container.querySelector('.fw-content').style.display = 'block';
-
-            if (data.boxscore?.form) renderRecentForm(data.boxscore.form);
-            if (data.boxscore?.teams) {
-                renderHeadToHead(data.headToHeadGames || [], data.boxscore.teams);
-                renderTeamStatistics(data.boxscore.teams);
-                const homeTeam = data.boxscore.teams.find(t => t.homeAway === 'home');
-                if (data.gameInfo?.venue) renderVenueInfo(data.gameInfo.venue, homeTeam);
+            if (res.ok) {
+                data = await res.json();
+                localStorage.setItem(CACHE_KEY, JSON.stringify({
+                    data,
+                    timestamp: Date.now()
+                }));
             }
-
-            // Initialize AdSense inside widget
-            try {
-                (adsbygoogle = window.adsbygoogle || []).push({});
-                (adsbygoogle = window.adsbygoogle || []).push({});
-                (adsbygoogle = window.adsbygoogle || []).push({});
-            } catch(e) { console.log("AdSense not loaded"); }
-
         } catch (e) {
+            console.log("API failed, will try cache", e);
+        }
+
+        if (!data) {
+            const cached = localStorage.getItem(CACHE_KEY);
+            if (cached) {
+                const { data: cachedData, timestamp } = JSON.parse(cached);
+                if (Date.now() - timestamp < CACHE_EXPIRY) {
+                    console.log("Loaded data from cache ✅");
+                    data = cachedData;
+                }
+            }
+        }
+
+        if (data) {
+            renderData(data);
+        } else {
             container.querySelector('.fw-loading').style.display = 'none';
-            const err = container.querySelector('.fw-error');
-            err.style.display = 'block';
-            err.querySelector('.fw-error-message').textContent = e.message;
         }
     }
 
