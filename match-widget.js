@@ -16,8 +16,8 @@ function createWidget(container) {
             <div style="text-align: center; margin: 20px 0;">
                 <ins class="adsbygoogle"
                      style="display:block"
-                     data-ad-client="ca-pub-XXXXXXXXXXXXXXXXX"
-                     data-ad-slot="XXXXXXXXXX"
+                     data-ad-client="ca-pub-2485970459707316"
+                     data-ad-slot="7957136821"
                      data-ad-format="auto"
                      data-full-width-responsive="true"></ins>
             </div>
@@ -41,8 +41,8 @@ function createWidget(container) {
             <div style="text-align: center; margin: 20px 0;">
                 <ins class="adsbygoogle"
                      style="display:block"
-                     data-ad-client="ca-pub-XXXXXXXXXXXXXXXXX"
-                     data-ad-slot="XXXXXXXXXX"
+                     data-ad-client="ca-pub-2485970459707316"
+                     data-ad-slot="2737166010"
                      data-ad-format="auto"
                      data-full-width-responsive="true"></ins>
             </div>
@@ -63,8 +63,8 @@ function createWidget(container) {
             <div style="text-align: center; margin: 20px 0;">
                 <ins class="adsbygoogle"
                      style="display:block"
-                     data-ad-client="ca-pub-XXXXXXXXXXXXXXXXX"
-                     data-ad-slot="XXXXXXXXXX"
+                     data-ad-client="ca-pub-2485970459707316"
+                     data-ad-slot="3657034432"
                      data-ad-format="auto"
                      data-full-width-responsive="true"></ins>
             </div>
