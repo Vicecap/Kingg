@@ -1,1 +1,99 @@
+async function loadMatch(container, team1, team2, league = "", eventId = "") {
+  const storageKey = `match_${team1}_${team2}_${league}_${eventId}`;
 
+  try {
+    // Build query for your proxy API
+    const query = new URLSearchParams({ league, id: eventId }).toString();
+    const res = await fetch(`http://YOUR_VPS_IP:3000/?${query}`);
+    const data = await res.json();
+
+    if (!data.events?.length) {
+      loadFromStorage("No matches available");
+      return;
+    }
+
+    // Find match for the two teams
+    const match = data.events.find(e =>
+      e.competitions?.[0]?.competitors?.some(c => c.team?.name.toLowerCase() === team1.toLowerCase()) &&
+      e.competitions?.[0]?.competitors?.some(c => c.team?.name.toLowerCase() === team2.toLowerCase())
+    );
+
+    if (!match) {
+      loadFromStorage("No upcoming or live match found for selected teams");
+      return;
+    }
+
+    // Save to localStorage
+    localStorage.setItem(storageKey, JSON.stringify(match));
+
+    // Display match
+    displayMatch(match);
+
+    // Auto-refresh if match is live
+    if (match.status?.type?.state === "in") {
+      setTimeout(() => loadMatch(container, team1, team2, league, eventId), 30000);
+    }
+
+  } catch (err) {
+    console.error(err);
+    loadFromStorage("❌ Failed to load match data");
+  }
+
+  // Load from storage fallback
+  function loadFromStorage(fallbackMsg) {
+    const stored = localStorage.getItem(storageKey);
+    if (stored) {
+      const match = JSON.parse(stored);
+      displayMatch(match, true);
+    } else {
+      container.innerHTML = fallbackMsg;
+    }
+  }
+
+  // Display match info
+  function displayMatch(match, fromStorage = false) {
+    const comp = match.competitions[0];
+    const home = comp.competitors?.find(c => c.homeAway === "home");
+    const away = comp.competitors?.find(c => c.homeAway === "away");
+
+    const homeName = home?.team?.name || "Home";
+    const awayName = away?.team?.name || "Away";
+
+    const kickoff = new Date(match.date).toLocaleString("en-GB", {
+      timeZone: "Europe/Paris",
+      dateStyle: "short",
+      timeStyle: "short"
+    });
+
+    const isLive = match.status?.type?.state === "in";
+    const isComplete = match.status?.type?.state === "post";
+    const clock = match.status?.displayClock || match.status?.clock || "";
+
+    const liveButton = isLive
+      ? '<span class="live-btn live">🔴 LIVE</span>'
+      : isComplete
+      ? '<span class="live-btn final">✅ FULL TIME</span>'
+      : '<span class="live-btn scheduled">⏰ SCHEDULED</span>';
+
+    container.innerHTML = `
+      <div class="match-widget">
+        <h2>${homeName} vs ${awayName}</h2>
+        ${fromStorage ? '<p style="color:orange;font-size:12px">(cached data)</p>' : ""}
+        <p>${liveButton} ${clock ? `- ${clock}` : ""}</p>
+        <p>Kickoff: ${kickoff}</p>
+        <p>Score: ${home?.score || 0} - ${away?.score || 0}</p>
+      </div>
+    `;
+  }
+}
+
+// Auto-init for all containers
+document.querySelectorAll(".match-widget-container").forEach(container => {
+  const team1 = container.getAttribute("data-team1");
+  const team2 = container.getAttribute("data-team2");
+  const league = container.getAttribute("data-league") || "";
+  const eventId = container.getAttribute("data-id") || "";
+
+  loadMatch(container, team1, team2, league, eventId);
+  setInterval(() => loadMatch(container, team1, team2, league, eventId), 30000);
+});
