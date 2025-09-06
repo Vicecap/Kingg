@@ -4,7 +4,7 @@ async function loadMatch(container, team1, team2, league = "", eventId = "") {
   try {
     // Build query for your proxy API
     const query = new URLSearchParams({ league, id: eventId }).toString();
-    const res = await fetch(`http://YOUR_VPS_IP:3000/?${query}`);
+    const res = await fetch(`https://api.totalsportslive.co.zw?${query}`);
     const data = await res.json();
 
     if (!data.events?.length) {
