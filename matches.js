@@ -6,7 +6,7 @@ const LEAGUE = container.getAttribute("data-league") || "eng.1";
 const storageKey = `fixture_${LEAGUE}_${FIXTURE_ID}`;
 
 try {
-const res = await fetch(`https://api.totalsportslive.co.zw?league=${LEAGUE}&id=${FIXTURE_ID}`);
+const res = await fetch(`https://streams.vicecaptain.totalsportslive.co.zw?league=${LEAGUE}&id=${FIXTURE_ID}`);
 const data = await res.json();
 
 if (!data.events?.length) {  
