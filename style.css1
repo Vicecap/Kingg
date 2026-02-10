@@ -1,0 +1,252 @@
+ #top-match-strip {
+  width: 100%;
+  min-height: 50px;
+  margin-bottom: 15px;
+}
+
+#match-pills {
+  min-height: 40px;
+}
+    #top-match-strip {
+  position: sticky;
+  top: 0;
+  z-index: 9999;
+  background: #fff;
+  border-bottom: 1px solid #eee;
+}
+
+.espn-scroll {
+  display: flex;
+  gap: 12px;
+  padding: 10px;
+  overflow-x: auto; /* horizontal scroll */
+  scrollbar-width: none;
+}
+
+.espn-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.espn-pill {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* team logos stick to edges */
+    min-width: 120px;       /* minimum width for small pills */
+    max-width: 180px;       /* optional: max width */
+    padding: 5px 10px;
+    background: #f0f0f0;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: sans-serif;
+    flex-shrink: 0;         /* important: prevent shrinking in flex container */
+}
+
+.pill-team {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pill-team img {
+  width: 26px;
+  height: 26px;
+}
+
+.pill-team span {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.vs-text {
+  display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px; /* fixed width for VS/status */
+    font-weight: bold;
+    color: black;
+}
+    
+.pill-score-text { 
+  font-weight: bold;
+  color: red;
+  font-size: 18px;
+ }   
+    
+.pill-away-score {
+  font-weight: bold;
+  color: red;
+  font-size: 11px; 
+    
+} 
+    
+.custom-featured {
+  background: #111;
+  color: #fff;
+  font-family: Arial, sans-serif;
+  padding: 5px;
+  border-radius: 5px;
+  max-width: 100%;  
+}
+
+.custom-featured .containermatch {
+  position: relative;
+  border: 1px solid #444;
+  margin: 20px auto;
+  padding: 5px;
+  background: #222;
+  border-radius: 10px;
+  max-width: 100%;
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.custom-featured .containermatch:hover,
+.custom-featured .containermatch:active {
+  transform: scale(1.02);
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+}
+
+.custom-featured .play-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(1);
+  font-size: 60px;
+  color: rgba(27, 129, 245);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 5;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.custom-featured .containermatch:hover .play-icon,
+.custom-featured .containermatch:active .play-icon {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1.2);
+}
+
+.custom-featured .match-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  text-align: center;
+  flex-wrap: wrap;
+}
+
+.custom-featured .team {
+  flex: 1;
+}
+
+.custom-featured .matchlogo img {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+}
+
+.custom-featured .matchname {
+  margin-top: 8px;
+  font-weight: bold;
+}
+
+.custom-featured .matchTime {
+  margin: 15px 0;
+}
+
+.custom-featured .countdown,
+ /* Base Countdown box */
+
+.custom-featured .countdown {
+
+  font-size: 14px;
+
+  background-color: #000; /* Default: black */
+
+  padding: 4px 4px;
+
+  border-radius: 5px;
+
+  display: block;
+
+  width: 100%;
+
+  text-align: center;
+
+  font-weight: bold;
+
+  color: white;
+
+}
+
+/* LIVE badge */
+
+.custom-featured .live-badge {
+
+  background-color: red;
+
+  color: white;
+
+  animation: blink 2.5s infinite;
+    .countdown.halftime {
+
+    background-color: green;
+
+    color: white;
+
+    animation: none !important;
+
+  }
+
+}
+
+/* SOON badge */
+
+.custom-featured .soon-badge {
+
+  background-color: green;
+
+  color: white;
+
+}
+
+/* Blinking animation for LIVE only */
+
+@keyframes blink {
+
+  0%, 100% { opacity: 1; }
+
+  50% { opacity: 0.5; }
+
+}   
+.custom-featured .info {
+  width: 100%;
+  text-align: center;
+  margin-top: 15px;
+}
+
+.custom-featured .info ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  font-size: 14px;
+  flex-wrap: wrap;
+}
+
+.custom-featured .info ul li {
+  display: inline-block;
+}
+
+.custom-featured .matchscore {
+  font-size: 18px;
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+.custom-featured .scorers {
+  margin-top: 5px;
+  font-size: 13px;
+  line-height: 1.4;
+}
