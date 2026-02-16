@@ -1,290 +1,207 @@
-// widget.js
+function createWidget(container){
 
-function createWidget(container) {
-    const FIXTURE_ID = container.getAttribute("data-fixture");
-    const LEAGUE = container.getAttribute("data-league") || "eng.1";
-    const API_URL = `https://streams.vicecaptain.totalsportslive.co.zw?league=${LEAGUE}&id=${FIXTURE_ID}`;
-    const CACHE_KEY = `fixture_${LEAGUE}_${FIXTURE_ID}`;
-    const CACHE_EXPIRY = 30 * 24 * 60 * 60 * 1000; // 30 days
+const FIXTURE_ID = container.dataset.fixture;
+const LEAGUE = container.dataset.league || "eng.1";
+const API_URL = `https://streams.vicecaptain.totalsportslive.co.zw?league=${LEAGUE}&id=${FIXTURE_ID}`;
 
-    // Inject skeleton with ALL sections (ads included)
-    container.innerHTML = `
-        <div class="fw-loading">Loading match data...</div>
-        <div class="fw-content" style="display: none;">
-            
-            <!-- AdSense 1 -->
-            <div style="text-align: center; margin: 20px 0;">
-                <ins class="adsbygoogle"
-                     style="display:block"
-                     data-ad-client="ca-pub-2485970459707316"
-                     data-ad-slot="7957136821"
-                     data-ad-format="auto"
-                     data-full-width-responsive="true"></ins>
-            </div>
+const CACHE_KEY = `fixture_${LEAGUE}_${FIXTURE_ID}`;
+const CACHE_EXPIRY = 30 * 24 * 60 * 60 * 1000;
 
-            <!-- Recent Form -->
-            <div class="card">
-                <div class="card-header form-header"><span>📈 Recent Form (Last 5 Matches)</span></div>
-                <div class="card-content"><div class="fw-recent-form team-grid"></div></div>
-            </div>
+// ------------------
+// Skeleton
+// ------------------
+container.innerHTML = `
+<div style="padding:10px;font-size:14px">Loading match data...</div>
 
-            <!-- Head-to-Head -->
-            <div class="card">
-                <div class="card-header h2h-header"><span>📊 Head-to-Head Record</span></div>
-                <div class="card-content">
-                    <div class="fw-h2h-summary h2h-summary"></div>
-                    <div class="fw-h2h-matches"></div>
-                </div>
-            </div>
+<div class="fw-content" style="display:none">
 
-            <!-- AdSense 2 -->
-            <div style="text-align: center; margin: 20px 0;">
-                <ins class="adsbygoogle"
-                     style="display:block"
-                     data-ad-client="ca-pub-2485970459707316"
-                     data-ad-slot="2737166010"
-                     data-ad-format="auto"
-                     data-full-width-responsive="true"></ins>
-            </div>
+<!-- AD SLOT 1 -->
+<div style="text-align:center;margin:16px 0">
+<ins class="adsbygoogle"
+ style="display:block"
+ data-ad-client="ca-pub-2485970459707316"
+ data-ad-slot="7957136821"
+ data-ad-format="auto"
+ data-full-width-responsive="true"></ins>
+</div>
 
-            <!-- Team Statistics -->
-            <div class="card">
-                <div class="card-header stats-header"><span>📋 Team Statistics Comparison</span></div>
-                <div class="card-content"><div class="fw-team-statistics stats-grid"></div></div>
-            </div>
+<!-- Recent Form -->
+<div style="background:#fff;border-radius:8px;padding:12px;margin-bottom:14px">
+<h3>📈 Recent Form</h3>
+<div class="fw-recent-form"></div>
+</div>
 
-            <!-- Venue -->
-            <div class="card">
-                <div class="card-header venue-header"><span>🏟️ Venue Information</span></div>
-                <div class="card-content"><div class="fw-venue-info"></div></div>
-            </div>
+<!-- H2H -->
+<div style="background:#fff;border-radius:8px;padding:12px;margin-bottom:14px">
+<h3>📊 Head To Head</h3>
+<div class="fw-h2h-matches"></div>
+</div>
 
-            <!-- AdSense 3 -->
-            <div style="text-align: center; margin: 20px 0;">
-                <ins class="adsbygoogle"
-                     style="display:block"
-                     data-ad-client="ca-pub-2485970459707316"
-                     data-ad-slot="3657034432"
-                     data-ad-format="auto"
-                     data-full-width-responsive="true"></ins>
-            </div>
-        </div>
-    `;
+<!-- In-article Ad -->
+<ins class="adsbygoogle"
+ style="display:block; text-align:center;"
+ data-ad-layout="in-article"
+ data-ad-format="fluid"
+ data-ad-client="ca-pub-2485970459707316"
+ data-ad-slot="3657034432"></ins>
 
-    // === Utility functions ===
-    function formatDate(dateString) {
-        return new Date(dateString).toLocaleDateString('en-US', {
-            month: 'short', day: 'numeric', year: 'numeric'
-        });
-    }
+<!-- Stats -->
+<div style="background:#fff;border-radius:8px;padding:12px;margin-bottom:14px">
+<h3>📋 Team Stats</h3>
+<div class="fw-team-statistics"></div>
+</div>
 
-    function getResultBadge(result) {
-        const classes = { 'W': 'badge badge-win','L': 'badge badge-loss','D': 'badge badge-draw' };
-        return classes[result] || 'badge';
-    }
+<!-- AD SLOT 2 -->
+<div style="text-align:center;margin:16px 0">
+<ins class="adsbygoogle"
+ style="display:block"
+ data-ad-client="ca-pub-2485970459707316"
+ data-ad-slot="2737166010"
+ data-ad-format="auto"
+ data-full-width-responsive="true"></ins>
+</div>
 
-    function getResultColor(result) {
-        const colors = { 'W': '#166534','L': '#dc2626','D': '#d97706' };
-        return colors[result] || '#64748b';
-    }
+<!-- Venue -->
+<div style="background:#fff;border-radius:8px;padding:12px">
+<h3>🏟 Venue</h3>
+<div class="fw-venue-info"></div>
+</div>
 
-    // === Render functions ===
-    function renderRecentForm(form) {
-        const containerEl = container.querySelector('.fw-recent-form');
-        containerEl.innerHTML = '';
-        form.forEach(teamForm => {
-            const teamDiv = document.createElement('div');
-            teamDiv.className = 'team-section';
-            const teamInfo = `
-                <div class="team-info">
-                    <img src="${teamForm.team.logo}" alt="${teamForm.team.displayName}" class="team-logo">
-                    <div>
-                        <div class="team-name">${teamForm.team.displayName}</div>
-                        <div class="form-badges">
-                            ${teamForm.events.slice(0,5).map(event =>
-                                `<span class="${getResultBadge(event.gameResult)}">${event.gameResult}</span>`
-                            ).join('')}
-                        </div>
-                    </div>
-                </div>
-            `;
-            const matches = `
-                <div class="match-list">
-                    ${teamForm.events.slice(0,5).map(event => `
-                        <div class="match-item">
-                            <div class="match-header">
-                                <div class="opponent-info">
-                                    <img src="${event.opponentLogo}" alt="${event.opponent.displayName}" class="opponent-logo">
-                                    <div>
-                                        <div>${event.atVs === '@' ? '@ ' : 'vs '}${event.opponent.displayName}</div>
-                                        <div class="match-date">${formatDate(event.gameDate)} • ${event.leagueAbbreviation || event.leagueName}</div>
-                                    </div>
-                                </div>
-                                <div class="match-result">
-                                    <div class="score" style="color:${getResultColor(event.gameResult)}">${event.gameResult} ${event.score}</div>
-                                </div>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-            teamDiv.innerHTML = teamInfo + matches;
-            containerEl.appendChild(teamDiv);
-        });
-    }
+</div>
+`;
 
-    function renderHeadToHead(headToHeadGames, teams) {
-        const summaryContainer = container.querySelector('.fw-h2h-summary');
-        const matchesContainer = container.querySelector('.fw-h2h-matches');
-        let team1Wins = 0, team2Wins = 0, draws = 0, allMatches = [];
-        if (headToHeadGames?.length) {
-            const team1Id = teams[0]?.team.id, team2Id = teams[1]?.team.id;
-            headToHeadGames.forEach(game => {
-                game.events?.forEach(event => {
-                    allMatches.push(event);
-                    const homeScore = +event.homeTeamScore, awayScore = +event.awayTeamScore;
-                    if (homeScore > awayScore) {
-                        if (event.homeTeamId === team1Id) team1Wins++;
-                        else if (event.homeTeamId === team2Id) team2Wins++;
-                    } else if (awayScore > homeScore) {
-                        if (event.awayTeamId === team1Id) team1Wins++;
-                        else if (event.awayTeamId === team2Id) team2Wins++;
-                    } else { draws++; }
-                });
-            });
-        }
-        summaryContainer.innerHTML = `
-            <div class="h2h-stat"><div class="h2h-number">${team1Wins}</div><div class="h2h-label">${teams[0]?.team.displayName || 'Team 1'} Wins</div></div>
-            <div class="h2h-stat"><div class="h2h-number">${draws}</div><div class="h2h-label">Draws</div></div>
-            <div class="h2h-stat"><div class="h2h-number">${team2Wins}</div><div class="h2h-label">${teams[1]?.team.displayName || 'Team 2'} Wins</div></div>
-        `;
-        if (allMatches.length) {
-            matchesContainer.innerHTML = `
-                <h3 style="margin-bottom:16px;font-weight:600;">Recent Encounters</h3>
-                <div class="match-list">
-                    ${allMatches.slice(0,5).map(match => {
-                        const homeTeam = teams.find(t => t.team.id === match.homeTeamId)?.team;
-                        const awayTeam = teams.find(t => t.team.id === match.awayTeamId)?.team;
-                        return `
-                            <div class="match-item">
-                                <div class="match-header">
-                                    <div class="opponent-info">
-                                        <img src="${homeTeam?.logo || ''}" class="opponent-logo">
-                                        <span>${homeTeam?.displayName || 'Home'} vs ${awayTeam?.displayName || 'Away'}</span>
-                                    </div>
-                                    <div class="match-result">
-                                        <div class="score">${match.score}</div>
-                                        <div class="match-date">${formatDate(match.gameDate)}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                    }).join('')}
-                </div>
-            `;
-        } else {
-            matchesContainer.innerHTML = '<div class="no-data">No head-to-head data available</div>';
-        }
-    }
+// ------------------
+// Helpers
+// ------------------
 
-    function renderTeamStatistics(teams) {
-        const containerEl = container.querySelector('.fw-team-statistics');
-        containerEl.innerHTML = '';
-        teams.forEach(team => {
-            const teamDiv = document.createElement('div');
-            teamDiv.innerHTML = `
-                <div class="team-info">
-                    <img src="${team.team.logo}" class="team-logo">
-                    <div class="team-name" style="color:#${team.team.color}">${team.team.displayName}</div>
-                </div>
-                <div>
-                    ${team.statistics.map(stat => `
-                        <div class="stat-item">
-                            <span class="stat-label">${stat.label}</span>
-                            <span class="stat-value" style="color:#${team.team.color}">${stat.displayValue}</span>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-            containerEl.appendChild(teamDiv);
-        });
-    }
-
-    function renderVenueInfo(venue, homeTeam) {
-        const containerEl = container.querySelector('.fw-venue-info');
-        containerEl.innerHTML = `
-            <div style="margin-bottom:24px;">
-                <h3 style="font-size:24px;font-weight:700;margin-bottom:8px;">${venue.fullName}</h3>
-                <p style="color:#64748b;">${venue.shortName}</p>
-            </div>
-            <div class="venue-grid">
-                <div class="venue-item"><span>📍</span><div><div>Location</div><div>${venue.address.city}, ${venue.address.country}</div></div></div>
-                <div class="venue-item"><span>👥</span><div><div>Capacity</div><div>66,000</div></div></div>
-                ${homeTeam ? `<div class="venue-item"><span>🏠</span><div><div>Home Team</div><div>${homeTeam.team.displayName}</div></div></div>`:''}
-                <div class="venue-item"><span>📅</span><div><div>Opened</div><div>2016</div></div></div>
-            </div>
-        `;
-    }
-
-    // === Render Wrapper ===
-    function renderData(data) {
-        container.querySelector('.fw-loading').style.display = 'none';
-        container.querySelector('.fw-content').style.display = 'block';
-
-        if (data.boxscore?.form) renderRecentForm(data.boxscore.form);
-        if (data.boxscore?.teams) {
-            renderHeadToHead(data.headToHeadGames || [], data.boxscore.teams);
-            renderTeamStatistics(data.boxscore.teams);
-            const homeTeam = data.boxscore.teams.find(t => t.homeAway === 'home');
-            if (data.gameInfo?.venue) renderVenueInfo(data.gameInfo.venue, homeTeam);
-        }
-
-        try {
-            (adsbygoogle = window.adsbygoogle || []).push({});
-            (adsbygoogle = window.adsbygoogle || []).push({});
-            (adsbygoogle = window.adsbygoogle || []).push({});
-        } catch(e) { console.log("AdSense not loaded"); }
-    }
-
-    // === Main fetch with cache ===
-    async function loadFixtureData() {
-        let data = null;
-
-        try {
-            const res = await fetch(API_URL);
-            if (res.ok) {
-                data = await res.json();
-                localStorage.setItem(CACHE_KEY, JSON.stringify({
-                    data,
-                    timestamp: Date.now()
-                }));
-            }
-        } catch (e) {
-            console.log("API failed, will try cache", e);
-        }
-
-        if (!data) {
-            const cached = localStorage.getItem(CACHE_KEY);
-            if (cached) {
-                const { data: cachedData, timestamp } = JSON.parse(cached);
-                if (Date.now() - timestamp < CACHE_EXPIRY) {
-                    console.log("Loaded data from cache ✅");
-                    data = cachedData;
-                }
-            }
-        }
-
-        if (data) {
-            renderData(data);
-        } else {
-            container.querySelector('.fw-loading').style.display = 'none';
-        }
-    }
-
-    loadFixtureData();
+function logo(url){
+ return `<img src="${url}" loading="lazy"
+ style="width:32px;height:32px;border-radius:50%;object-fit:contain;background:#fff;padding:2px">`;
 }
 
-// Init all widgets
-document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.football-widget').forEach(createWidget);
+function smallLogo(url){
+ return `<img src="${url}" loading="lazy"
+ style="width:26px;height:26px;border-radius:50%;object-fit:contain;background:#fff;padding:2px">`;
+}
+
+// ------------------
+// Renderers
+// ------------------
+
+function renderRecentForm(form){
+ const box = container.querySelector(".fw-recent-form");
+ box.innerHTML = form.map(t=>`
+  <div style="margin-bottom:10px">
+   <div style="display:flex;align-items:center;gap:8px">
+    ${logo(t.team.logo)}
+    <b>${t.team.displayName}</b>
+   </div>
+
+   ${t.events.slice(0,5).map(e=>`
+    <div style="display:flex;align-items:center;gap:6px">
+     ${smallLogo(e.opponentLogo)}
+     <span>${e.gameResult} ${e.score}</span>
+    </div>
+   `).join("")}
+  </div>
+ `).join("");
+}
+
+function renderH2H(games){
+ const box = container.querySelector(".fw-h2h-matches");
+ box.innerHTML = games.slice(0,5).map(g=>`
+  <div style="padding:6px 0;border-bottom:1px solid #eee">
+   ${g.events?.[0]?.score || ""}
+  </div>
+ `).join("");
+}
+
+function renderStats(teams){
+ const box = container.querySelector(".fw-team-statistics");
+
+ box.innerHTML = teams.map(t=>`
+  <div style="margin-bottom:12px">
+   <div style="display:flex;align-items:center;gap:8px">
+    ${logo(t.team.logo)}
+    <b>${t.team.displayName}</b>
+   </div>
+
+   ${t.statistics.map(s=>`
+    <div style="display:flex;justify-content:space-between">
+     <span>${s.label}</span>
+     <b>${s.displayValue}</b>
+    </div>
+   `).join("")}
+  </div>
+ `).join("");
+}
+
+function renderVenue(v){
+ container.querySelector(".fw-venue-info").innerHTML = `
+  <b>${v.fullName}</b><br>
+  ${v.address.city}, ${v.address.country}
+ `;
+}
+
+// ------------------
+// Load Data
+// ------------------
+
+async function load(){
+
+ let data = null;
+
+ try{
+  const r = await fetch(API_URL);
+  if(r.ok){
+   data = await r.json();
+   localStorage.setItem(CACHE_KEY, JSON.stringify({
+    data,
+    time: Date.now()
+   }));
+  }
+ }catch(e){}
+
+ if(!data){
+  const c = localStorage.getItem(CACHE_KEY);
+  if(c){
+   const j = JSON.parse(c);
+   if(Date.now() - j.time < CACHE_EXPIRY) data = j.data;
+  }
+ }
+
+ if(!data){
+  container.innerHTML = "<p style='padding:12px'>Match data unavailable.</p>";
+  return;
+ }
+
+ container.querySelector(".fw-content").style.display = "block";
+
+ if(data.boxscore?.form) renderRecentForm(data.boxscore.form);
+ if(data.headToHeadGames) renderH2H(data.headToHeadGames);
+ if(data.boxscore?.teams){
+  renderStats(data.boxscore.teams);
+  if(data.gameInfo?.venue) renderVenue(data.gameInfo.venue);
+ }
+
+ // Lazy-load ads
+ document.querySelectorAll(".adsbygoogle").forEach(ad=>{
+  new IntersectionObserver(entries=>{
+   if(entries[0].isIntersecting){
+    (adsbygoogle = window.adsbygoogle || []).push({});
+   }
+  }).observe(ad);
+ });
+
+}
+
+load();
+}
+
+// ------------------
+// Init
+// ------------------
+
+document.addEventListener("DOMContentLoaded",()=>{
+ document.querySelectorAll(".football-widget").forEach(createWidget);
 });
