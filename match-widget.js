@@ -174,21 +174,30 @@ function createWidget(container) {
             }
         }
 
-        if(data){
-            container.querySelector('.fw-loading').style.display='none';
-            container.querySelector('.fw-content').style.display='block';
+        // Always hide loader
+container.querySelector('.fw-loading').style.display = 'none';
 
-            if(data.boxscore?.form) renderRecentForm(data.boxscore.form);
-            if(data.boxscore?.teams){
-                renderTeamStatistics(data.boxscore.teams);
-                if(data.gameInfo?.venue) renderVenueInfo(data.gameInfo.venue);
-            }
+if(!data){
+  container.innerHTML += `
+    <div style="padding:12px;text-align:center;color:#777">
+      Match data unavailable.
+    </div>`;
+  return;
+}
 
-            try{
-                (adsbygoogle=window.adsbygoogle||[]).push({});
-                (adsbygoogle=window.adsbygoogle||[]).push({});
-            }catch(e){}
-        }
+container.querySelector('.fw-content').style.display = 'block';
+
+if(data.boxscore?.form) renderRecentForm(data.boxscore.form);
+
+if(data.boxscore?.teams){
+  renderTeamStatistics(data.boxscore.teams);
+  if(data.gameInfo?.venue) renderVenueInfo(data.gameInfo.venue);
+}
+
+try{
+ (adsbygoogle=window.adsbygoogle||[]).push({});
+ (adsbygoogle=window.adsbygoogle||[]).push({});
+}catch(e){}
     }
 
     loadFixtureData();
